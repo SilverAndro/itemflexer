@@ -3,8 +3,10 @@
   "id": "itemflexer",
   "version": "${version}",
   "name": "ItemFlexer",
-  "description": "",
-  "authors": [],
+  "description": "Lets you flex your items in chat",
+  "authors": [
+    "TheoreticallyUseful"
+  ],
   "contact": {},
   "license": "MIT",
   "icon": "assets/itemflexer/icon.png",
