@@ -5,5 +5,5 @@ import mc.microconfig.ConfigData;
 
 class ItemFlexerConfig implements ConfigData {
     @Comment("Cooldown before /flex can be used again, in ticks")
-    int cooldown = 0;
+    public int cooldown = 0;
 }
