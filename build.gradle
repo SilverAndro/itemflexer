@@ -23,8 +23,8 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    implementation 'com.github.P03W:Microconfig:1.0.1'
-    include 'com.github.P03W:Microconfig:1.0.1'
+    implementation 'com.github.P03W:Microconfig:1.0.3'
+    include 'com.github.P03W:Microconfig:1.0.3'
 }
 
 processResources {
