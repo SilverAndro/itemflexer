@@ -12,6 +12,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
 
 import java.util.HashMap;
@@ -26,11 +27,13 @@ public class ItemFlexer implements ModInitializer {
         System.out.println("Flex your items!");
         
         ServerTickEvents.END_SERVER_TICK.register((world) -> {
+            // Reduce the cooldown count of all players on cooldown
             for (ServerPlayerEntity player : cooldowns.keySet()) {
                 int current = cooldowns.get(player);
                 cooldowns.put(player, current - 1);
             }
             
+            // Remove all players form cooldown list if the cooldown has expired
             for (ServerPlayerEntity player : cooldowns.keySet()) {
                 int current = cooldowns.get(player);
                 if (current <= 0) {
@@ -42,6 +45,7 @@ public class ItemFlexer implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(
             CommandManager.literal("flex")
                 .executes(context -> {
+                    // Get the current held item and pass it to the logic
                     ServerPlayerEntity entity = context.getSource().getPlayer();
                     ItemStack stack = entity.getMainHandStack();
                     
@@ -49,6 +53,7 @@ public class ItemFlexer implements ModInitializer {
                 })
                 .then(CommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
                     .executes(context -> {
+                        // Get the item in that slot and pass it
                         int slotIndex = IntegerArgumentType.getInteger(context, "slot");
                         ServerPlayerEntity entity = context.getSource().getPlayer();
                         ItemStack stack = entity.inventory.getStack(slotIndex - 1);
@@ -61,15 +66,21 @@ public class ItemFlexer implements ModInitializer {
     }
     
     private int flexItem(ItemStack stack, ServerPlayerEntity player, ServerCommandSource source) {
+        // Make sure they cant flex items if on cooldown and send feedback
         if (cooldowns.containsKey(player)) {
             source.sendError(new LiteralText("On cooldown: " + cooldowns.get(player) / 20.0f + " seconds left.").formatted(Formatting.RED));
             return 0;
         }
         
+        // Make sure their actually holding something
         if (stack.getItem() != Items.AIR) {
+            // Put them on cooldown
             cooldowns.put(player, config.cooldown);
+            
+            // Construct and broadcast the message to all users
+            MutableText text = ((LiteralText)player.getDisplayName()).append(new LiteralText(" is flexing their ").formatted(Formatting.WHITE)).append(stack.toHoverableText());
             for (ServerPlayerEntity other : PlayerLookup.all(player.server)) {
-                other.sendMessage(((LiteralText)player.getDisplayName()).append(new LiteralText(" is flexing their ").formatted(Formatting.WHITE)).append(stack.toHoverableText()), false);
+                other.sendMessage(text, false);
             }
             return 1;
         } else {
