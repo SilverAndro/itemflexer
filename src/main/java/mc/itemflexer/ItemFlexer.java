@@ -6,6 +6,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.command.CommandManager;
@@ -15,7 +16,9 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
 
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ItemFlexer implements ModInitializer {
     ItemFlexerConfig config = MicroConfig.getOrCreate("itemflexer", new ItemFlexerConfig());
@@ -30,14 +33,8 @@ public class ItemFlexer implements ModInitializer {
             // Reduce the cooldown count of all players on cooldown
             for (ServerPlayerEntity player : cooldowns.keySet()) {
                 int current = cooldowns.get(player);
-                cooldowns.put(player, current - 1);
-            }
-            
-            // Remove all players form cooldown list if the cooldown has expired
-            for (ServerPlayerEntity player : cooldowns.keySet()) {
-                int current = cooldowns.get(player);
-                if (current <= 0) {
-                    cooldowns.remove(player);
+                if (current >= 0) {
+                    cooldowns.put(player, current - 1);
                 }
             }
         });
@@ -67,7 +64,7 @@ public class ItemFlexer implements ModInitializer {
     
     private int flexItem(ItemStack stack, ServerPlayerEntity player, ServerCommandSource source) {
         // Make sure they cant flex items if on cooldown and send feedback
-        if (cooldowns.containsKey(player)) {
+        if (cooldowns.containsKey(player) && cooldowns.get(player) > 0) {
             source.sendError(new LiteralText("On cooldown: " + cooldowns.get(player) / 20.0f + " seconds left.").formatted(Formatting.RED));
             return 0;
         }
