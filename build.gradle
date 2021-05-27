@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '0.5-SNAPSHOT'
+    id 'fabric-loom' version '0.7-SNAPSHOT'
     id 'maven-publish'
 }
 
@@ -11,7 +11,16 @@ version = project.mod_version
 group = project.maven_group
 
 repositories {
-    maven { url 'https://jitpack.io' }
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name "Nucleoid"
+        url 'https://maven.nucleoid.xyz'
+    }
+    maven {
+        name "Jitpack"
+        url 'https://jitpack.io'
+    }
 }
 
 dependencies {
@@ -23,8 +32,11 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    implementation 'com.github.P03W:Microconfig:1.1.0'
-    include 'com.github.P03W:Microconfig:1.1.0'
+    modImplementation 'com.github.P03W:Microconfig:2.0.1'
+    include 'com.github.P03W:Microconfig:2.0.1'
+
+    modImplementation('com.github.Patbox:FabricPlaceholderAPI:0.3.0')
+    include('com.github.Patbox:FabricPlaceholderAPI:0.3.0')
 }
 
 processResources {
@@ -77,5 +89,16 @@ publishing {
     repositories {
         // uncomment to publish to the local maven
         // mavenLocal()
+    }
+}
+
+task listrepos {
+    doLast {
+        println "Repositories:"
+        project.repositories.each {try {
+            println "Name: " + it.name + "; url: " + it.url
+        } catch(Throwable ignored) {
+            println("Name: " + it.name)
+        } }
     }
 }
