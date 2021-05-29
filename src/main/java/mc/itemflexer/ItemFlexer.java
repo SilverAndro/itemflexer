@@ -14,9 +14,7 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 
 import java.util.HashMap;
@@ -35,6 +33,11 @@ public class ItemFlexer implements ModInitializer {
         PlaceholderAPI.register(
             new Identifier("itemflexer", "item"),
             (ctx) -> PlaceholderResult.value(stack.toHoverableText())
+        );
+    
+        PlaceholderAPI.register(
+            new Identifier("itemflexer", "cooldown"),
+            (ctx) -> PlaceholderResult.value(new LiteralText(cooldowns.get(ctx.getPlayer()) / 20f + ""))
         );
         
         ServerTickEvents.END_SERVER_TICK.register((world) -> {
@@ -73,7 +76,7 @@ public class ItemFlexer implements ModInitializer {
     private int flexItem(ItemStack stack, ServerPlayerEntity player, ServerCommandSource source) {
         // Make sure they cant flex items if on cooldown and send feedback
         if (cooldowns.containsKey(player) && cooldowns.get(player) > 0) {
-            source.sendError(new LiteralText("On cooldown: " + cooldowns.get(player) / 20.0f + " seconds left.").formatted(Formatting.RED));
+            source.sendError(PlaceholderAPI.parseText(new LiteralText(config.failureOnCooldown), player));
             return 0;
         }
         
@@ -83,14 +86,14 @@ public class ItemFlexer implements ModInitializer {
             cooldowns.put(player, config.cooldown);
             
             // Construct and broadcast the message to all users
-            Text text = Text.of(config.chatMessage);
+            Text text = new LiteralText(config.chatMessage);
             Text message = PlaceholderAPI.parseText(text, player);
             for (ServerPlayerEntity other : PlayerLookup.all(player.server)) {
                 other.sendMessage(message, false);
             }
             return 1;
         } else {
-            source.sendError(new LiteralText("Can't flex empty item").formatted(Formatting.RED));
+            source.sendError(new LiteralText(config.failureNoItem));
             return 0;
         }
     }
