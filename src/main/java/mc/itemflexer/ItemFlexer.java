@@ -64,7 +64,7 @@ public class ItemFlexer implements ModInitializer {
                         // Get the item in that slot and pass it
                         int slotIndex = IntegerArgumentType.getInteger(context, "slot");
                         ServerPlayerEntity entity = context.getSource().getPlayer();
-                        stack = entity.inventory.getStack(slotIndex - 1);
+                        stack = entity.getInventory().getStack(slotIndex - 1);
                         
                         return flexItem(stack, entity, context.getSource());
                     })

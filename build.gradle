@@ -32,8 +32,8 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modImplementation 'com.github.P03W:Microconfig:2.0.1'
-    include 'com.github.P03W:Microconfig:2.0.1'
+    modImplementation 'com.github.P03W:Microconfig:2.0.4'
+    include 'com.github.P03W:Microconfig:2.0.4'
 
     modImplementation('com.github.Patbox:FabricPlaceholderAPI:0.3.0')
     include('com.github.Patbox:FabricPlaceholderAPI:0.3.0')
@@ -42,13 +42,8 @@ dependencies {
 processResources {
     inputs.property "version", project.version
 
-    from(sourceSets.main.resources.srcDirs) {
-        include "fabric.mod.json"
+    filesMatching("fabric.mod.json") {
         expand "version": project.version
-    }
-
-    from(sourceSets.main.resources.srcDirs) {
-        exclude "fabric.mod.json"
     }
 }
 
