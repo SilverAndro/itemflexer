@@ -15,4 +15,7 @@ public class ItemFlexerConfig implements ConfigData {
     
     @Comment("The message for trying to flex on cooldown\nUse %itemflexer:cooldown% for the cooldown")
     public String failureOnCooldown = "On Cooldown: %itemflexer:cooldown% seconds left";
+    
+    @Comment("The name of the command to flex items")
+    public String commandName = "flex";
 }

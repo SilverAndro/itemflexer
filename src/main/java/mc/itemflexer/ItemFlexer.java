@@ -7,7 +7,6 @@ import mc.microconfig.MicroConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.command.CommandManager;
@@ -51,7 +50,7 @@ public class ItemFlexer implements ModInitializer {
         });
         
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(
-            CommandManager.literal("flex")
+            CommandManager.literal(config.commandName)
                 .executes(context -> {
                     // Get the current held item and pass it to the logic
                     ServerPlayerEntity entity = context.getSource().getPlayer();
@@ -74,7 +73,7 @@ public class ItemFlexer implements ModInitializer {
     }
     
     private int flexItem(ItemStack stack, ServerPlayerEntity player, ServerCommandSource source) {
-        // Make sure they cant flex items if on cooldown and send feedback
+        // Make sure they can't flex items if on cooldown and send feedback
         if (cooldowns.containsKey(player) && cooldowns.get(player) > 0) {
             source.sendError(PlaceholderAPI.parseText(new LiteralText(config.failureOnCooldown), player));
             return 0;
@@ -88,7 +87,7 @@ public class ItemFlexer implements ModInitializer {
             // Construct and broadcast the message to all users
             Text text = new LiteralText(config.chatMessage);
             Text message = PlaceholderAPI.parseText(text, player);
-            for (ServerPlayerEntity other : PlayerLookup.all(player.server)) {
+            for (ServerPlayerEntity other : player.server.getPlayerManager().getPlayerList()) {
                 other.sendMessage(message, false);
             }
             return 1;

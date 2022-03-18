@@ -7,20 +7,14 @@
   "authors": [
     "TheoreticallyUseful"
   ],
-  "contact": {},
+  "contact": {
+    "sources": "https://github.com/P03W/itemflexer"
+  },
   "license": "MIT",
   "icon": "assets/itemflexer/icon.png",
   "entrypoints": {
     "main": [
       "mc.itemflexer.ItemFlexer"
     ]
-  },
-  "mixins": [
-    "itemflexer.mixins.json"
-  ],
-  "depends": {
-    "fabricloader": "*",
-    "fabric": "*",
-    "minecraft": "*"
   }
 }
