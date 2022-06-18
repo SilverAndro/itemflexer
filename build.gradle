@@ -28,14 +28,14 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation fabricApi.module("fabric-command-api-v1", project.fabric_version)
+    modImplementation fabricApi.module("fabric-command-api-v2", project.fabric_version)
     modImplementation fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version)
 
     modImplementation 'com.github.P03W:Microconfig:2.2.1'
     include 'com.github.P03W:Microconfig:2.2.1'
 
-    modImplementation("eu.pb4:placeholder-api:1.1.3+1.17.1")
-    include("eu.pb4:placeholder-api:1.1.3+1.17.1")
+    modImplementation("eu.pb4:placeholder-api:2.0.0-beta.5+1.19")
+    include("eu.pb4:placeholder-api:2.0.0-beta.5+1.19")
 }
 
 processResources {
