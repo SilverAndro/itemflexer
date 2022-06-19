@@ -1,18 +1,18 @@
 package mc.itemflexer;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import eu.pb4.placeholders.PlaceholderAPI;
-import eu.pb4.placeholders.PlaceholderResult;
+import eu.pb4.placeholders.api.Placeholders;
+import eu.pb4.placeholders.api.PlaceholderContext;
+import eu.pb4.placeholders.api.PlaceholderResult;
 import mc.microconfig.MicroConfig;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -20,25 +20,25 @@ import java.util.HashMap;
 
 public class ItemFlexer implements ModInitializer {
     ItemFlexerConfig config = MicroConfig.getOrCreate("itemflexer", new ItemFlexerConfig());
-    
+
     private final HashMap<ServerPlayerEntity, Integer> cooldowns = new HashMap<>();
-    
+
     public static ItemStack stack;
-    
+
     @Override
     public void onInitialize() {
         System.out.println("Flex your items!");
-    
-        PlaceholderAPI.register(
+
+        Placeholders.register(
             new Identifier("itemflexer", "item"),
-            (ctx) -> PlaceholderResult.value(stack.toHoverableText())
+            (ctx, _s) -> PlaceholderResult.value(stack.toHoverableText())
         );
-    
-        PlaceholderAPI.register(
+
+        Placeholders.register(
             new Identifier("itemflexer", "cooldown"),
-            (ctx) -> PlaceholderResult.value(new LiteralText(cooldowns.get(ctx.getPlayer()) / 20f + ""))
+            (ctx, _s) -> PlaceholderResult.value(Text.empty().append(cooldowns.get(ctx.player()) / 20f + ""))
         );
-        
+
         ServerTickEvents.END_SERVER_TICK.register((world) -> {
             // Reduce the cooldown count of all players on cooldown
             for (ServerPlayerEntity player : cooldowns.keySet()) {
@@ -48,14 +48,14 @@ public class ItemFlexer implements ModInitializer {
                 }
             }
         });
-        
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> dispatcher.register(
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated, _env) -> dispatcher.register(
             CommandManager.literal(config.commandName)
                 .executes(context -> {
                     // Get the current held item and pass it to the logic
                     ServerPlayerEntity entity = context.getSource().getPlayer();
                     stack = entity.getMainHandStack();
-                    
+
                     return flexItem(stack, entity, context.getSource());
                 })
                 .then(CommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
@@ -64,35 +64,35 @@ public class ItemFlexer implements ModInitializer {
                         int slotIndex = IntegerArgumentType.getInteger(context, "slot");
                         ServerPlayerEntity entity = context.getSource().getPlayer();
                         stack = entity.getInventory().getStack(slotIndex - 1);
-                        
+
                         return flexItem(stack, entity, context.getSource());
                     })
                 )
             )
         );
     }
-    
+
     private int flexItem(ItemStack stack, ServerPlayerEntity player, ServerCommandSource source) {
         // Make sure they can't flex items if on cooldown and send feedback
         if (cooldowns.containsKey(player) && cooldowns.get(player) > 0) {
-            source.sendError(PlaceholderAPI.parseText(new LiteralText(config.failureOnCooldown), player));
+            source.sendError(Placeholders.parseText(Text.empty().append(config.failureOnCooldown), PlaceholderContext.of(player)));
             return 0;
         }
-        
+
         // Make sure their actually holding something
         if (stack.getItem() != Items.AIR) {
             // Put them on cooldown
             cooldowns.put(player, config.cooldown);
-            
+
             // Construct and broadcast the message to all users
-            Text text = new LiteralText(config.chatMessage);
-            Text message = PlaceholderAPI.parseText(text, player);
+            Text text = Text.empty().append(config.chatMessage);
+            Text message = Placeholders.parseText(text, PlaceholderContext.of(player));
             for (ServerPlayerEntity other : player.server.getPlayerManager().getPlayerList()) {
                 other.sendMessage(message, false);
             }
             return 1;
         } else {
-            source.sendError(new LiteralText(config.failureNoItem));
+            source.sendError(Text.empty().append(config.failureNoItem));
             return 0;
         }
     }
