@@ -30,12 +30,14 @@ public class ItemFlexer implements ModInitializer {
         System.out.println("Flex your items!");
 
         Placeholders.register(
-                new Identifier("itemflexer", "item"),
-                (ctx, _s) -> PlaceholderResult.value(stack.toHoverableText()));
+            new Identifier("itemflexer", "item"),
+            (ctx, _s) -> PlaceholderResult.value(stack.toHoverableText())
+        );
 
         Placeholders.register(
-                new Identifier("itemflexer", "cooldown"),
-                (ctx, _s) -> PlaceholderResult.value(Text.empty().append(cooldowns.get(ctx.player()) / 20f + "")));
+            new Identifier("itemflexer", "cooldown"),
+            (ctx, _s) -> PlaceholderResult.value(Text.empty().append(cooldowns.get(ctx.player()) / 20f + ""))
+        );
 
         ServerTickEvents.END_SERVER_TICK.register((world) -> {
             // Reduce the cooldown count of all players on cooldown
@@ -48,30 +50,32 @@ public class ItemFlexer implements ModInitializer {
         });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated, _env) -> dispatcher.register(
-                CommandManager.literal(config.commandName)
-                        .executes(context -> {
-                            // Get the current held item and pass it to the logic
-                            ServerPlayerEntity entity = context.getSource().getPlayer();
-                            stack = entity.getMainHandStack();
+            CommandManager.literal(config.commandName)
+                .executes(context -> {
+                    // Get the current held item and pass it to the logic
+                    ServerPlayerEntity entity = context.getSource().getPlayer();
+                    stack = entity.getMainHandStack();
 
-                            return flexItem(stack, entity, context.getSource());
-                        })
-                        .then(CommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
-                                .executes(context -> {
-                                    // Get the item in that slot and pass it
-                                    int slotIndex = IntegerArgumentType.getInteger(context, "slot");
-                                    ServerPlayerEntity entity = context.getSource().getPlayer();
-                                    stack = entity.getInventory().getStack(slotIndex - 1);
+                    return flexItem(stack, entity, context.getSource());
+                })
+                .then(CommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
+                    .executes(context -> {
+                        // Get the item in that slot and pass it
+                        int slotIndex = IntegerArgumentType.getInteger(context, "slot");
+                        ServerPlayerEntity entity = context.getSource().getPlayer();
+                        stack = entity.getInventory().getStack(slotIndex - 1);
 
-                                    return flexItem(stack, entity, context.getSource());
-                                }))));
+                        return flexItem(stack, entity, context.getSource());
+                    })
+                )
+            )
+        );
     }
 
     private int flexItem(ItemStack stack, ServerPlayerEntity player, ServerCommandSource source) {
         // Make sure they can't flex items if on cooldown and send feedback
         if (cooldowns.containsKey(player) && cooldowns.get(player) > 0) {
-            source.sendError(Placeholders.parseText(Text.empty().append(config.failureOnCooldown),
-                    PlaceholderContext.of(player)));
+            source.sendError(Placeholders.parseText(Text.empty().append(config.failureOnCooldown), PlaceholderContext.of(player)));
             return 0;
         }
 
