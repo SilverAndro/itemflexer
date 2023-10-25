@@ -5,16 +5,16 @@
   "name": "ItemFlexer",
   "description": "Lets you flex your items in chat",
   "authors": [
-    "TheoreticallyUseful"
+    "SilverAndro"
   ],
   "contact": {
-    "sources": "https://github.com/P03W/itemflexer"
+    "sources": "https://github.com/SilverAndro/itemflexer"
   },
   "license": "MIT",
   "icon": "assets/itemflexer/icon.png",
   "entrypoints": {
     "main": [
-      "mc.itemflexer.ItemFlexer"
+      "dev.silverandro.itemflexer.ItemFlexer"
     ]
   }
 }
