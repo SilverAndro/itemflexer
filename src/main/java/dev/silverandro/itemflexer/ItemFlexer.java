@@ -30,17 +30,17 @@ public class ItemFlexer implements ModInitializer {
         System.out.println("Flex your items!");
 
         Placeholders.register(
-            new Identifier("itemflexer", "item"),
+            Identifier.of("itemflexer", "item"),
             (ctx, _s) -> PlaceholderResult.value(stack.toHoverableText())
         );
 
         Placeholders.register(
-                new Identifier("itemflexer", "count"),
+                Identifier.of("itemflexer", "count"),
                 (ctx, _s) -> PlaceholderResult.value(String.valueOf(stack.getCount()))
         );
 
         Placeholders.register(
-            new Identifier("itemflexer", "cooldown"),
+            Identifier.of("itemflexer", "cooldown"),
             (ctx, _s) -> PlaceholderResult.value(Text.empty().append(cooldowns.get(ctx.player()) / 20f + ""))
         );
 
