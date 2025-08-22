@@ -109,7 +109,7 @@ public class ItemFlexer implements ModInitializer {
             }
 
             Text message = Placeholders.parseText(text, PlaceholderContext.of(player));
-            for (ServerPlayerEntity other : player.server.getPlayerManager().getPlayerList()) {
+            for (ServerPlayerEntity other : player.getServer().getPlayerManager().getPlayerList()) {
                 other.sendMessage(message, false);
             }
             return 1;
