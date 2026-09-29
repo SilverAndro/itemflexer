@@ -1,27 +1,26 @@
 package dev.silverandro.itemflexer;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import eu.pb4.placeholders.api.Placeholders;
-import eu.pb4.placeholders.api.PlaceholderContext;
 import eu.pb4.placeholders.api.PlaceholderResult;
+import eu.pb4.placeholders.api.Placeholders;
+import eu.pb4.placeholders.api.ServerPlaceholderContext;
 import mc.microconfig.MicroConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
 
 public class ItemFlexer implements ModInitializer {
     ItemFlexerConfig config = MicroConfig.getOrCreate("itemflexer", new ItemFlexerConfig());
 
-    private final HashMap<ServerPlayerEntity, Integer> cooldowns = new HashMap<>();
+    private final HashMap<ServerPlayer, Integer> cooldowns = new HashMap<>();
 
     public static ItemStack stack;
 
@@ -29,24 +28,24 @@ public class ItemFlexer implements ModInitializer {
     public void onInitialize() {
         System.out.println("Flex your items!");
 
-        Placeholders.register(
-            Identifier.of("itemflexer", "item"),
-            (ctx, _s) -> PlaceholderResult.value(stack.toHoverableText())
+        Placeholders.registerServer(
+            Identifier.fromNamespaceAndPath("itemflexer", "item"),
+            (ctx, _s) -> PlaceholderResult.value(stack == null ? Component.empty() : stack.getDisplayName())
         );
 
-        Placeholders.register(
-                Identifier.of("itemflexer", "count"),
-                (ctx, _s) -> PlaceholderResult.value(String.valueOf(stack.getCount()))
+        Placeholders.registerServer(
+                Identifier.fromNamespaceAndPath("itemflexer", "count"),
+                (ctx, _s) -> PlaceholderResult.value(stack == null ? "0" : String.valueOf(stack.getCount()))
         );
 
-        Placeholders.register(
-            Identifier.of("itemflexer", "cooldown"),
-            (ctx, _s) -> PlaceholderResult.value(Text.empty().append(cooldowns.get(ctx.player()) / 20f + ""))
+        Placeholders.registerServer(
+            Identifier.fromNamespaceAndPath("itemflexer", "cooldown"),
+            (ctx, _s) -> PlaceholderResult.value(cooldowns.getOrDefault(ctx.serverPlayer(), 0) / 20f + "")
         );
 
-        ServerTickEvents.END_SERVER_TICK.register((world) -> {
+        ServerTickEvents.END_SERVER_TICK.register((server) -> {
             // Reduce the cooldown count of all players on cooldown
-            for (ServerPlayerEntity player : cooldowns.keySet()) {
+            for (ServerPlayer player : cooldowns.keySet()) {
                 int current = cooldowns.get(player);
                 if (current >= 0) {
                     cooldowns.put(player, current - 1);
@@ -54,33 +53,33 @@ public class ItemFlexer implements ModInitializer {
             }
         });
 
-        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated, _env) -> dispatcher.register(
-            CommandManager.literal(config.commandName)
+        CommandRegistrationCallback.EVENT.register((dispatcher, _buildContext, _selection) -> dispatcher.register(
+            Commands.literal(config.commandName)
                 .executes(context -> {
                     // Get the current held item and pass it to the logic
-                    ServerPlayerEntity entity = context.getSource().getPlayerOrThrow();
-                    stack = entity.getMainHandStack();
+                    ServerPlayer entity = context.getSource().getPlayerOrException();
+                    stack = entity.getMainHandItem();
 
                     return flexItem(stack, entity, false, context.getSource());
-                }).then(CommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
+                }).then(Commands.argument("slot", IntegerArgumentType.integer(1, 9))
                     .executes(context -> {
                         // Get the item in that slot and pass it
                         int slotIndex = IntegerArgumentType.getInteger(context, "slot");
-                        ServerPlayerEntity entity = context.getSource().getPlayerOrThrow();
-                        stack = entity.getInventory().getStack(slotIndex - 1);
+                        ServerPlayer entity = context.getSource().getPlayerOrException();
+                        stack = entity.getInventory().getItem(slotIndex - 1);
 
                         return flexItem(stack, entity, false, context.getSource());
                     }))
-                .then(CommandManager.literal("showCount").executes(context -> {
-                    ServerPlayerEntity entity = context.getSource().getPlayerOrThrow();
-                    stack = entity.getMainHandStack();
+                .then(Commands.literal("showCount").executes(context -> {
+                    ServerPlayer entity = context.getSource().getPlayerOrException();
+                    stack = entity.getMainHandItem();
                     return this.flexItem(stack, entity, true, context.getSource());
-                }).then(CommandManager.argument("slot", IntegerArgumentType.integer(1, 9))
+                }).then(Commands.argument("slot", IntegerArgumentType.integer(1, 9))
                     .executes(context -> {
                         // Get the item in that slot and pass it
                         int slotIndex = IntegerArgumentType.getInteger(context, "slot");
-                        ServerPlayerEntity entity = context.getSource().getPlayerOrThrow();
-                        stack = entity.getInventory().getStack(slotIndex - 1);
+                        ServerPlayer entity = context.getSource().getPlayerOrException();
+                        stack = entity.getInventory().getItem(slotIndex - 1);
 
                         return flexItem(stack, entity, true, context.getSource());
                     })))
@@ -88,33 +87,35 @@ public class ItemFlexer implements ModInitializer {
         );
     }
 
-    private int flexItem(ItemStack stack, ServerPlayerEntity player, boolean showCount, ServerCommandSource source) {
+    private int flexItem(ItemStack stack, ServerPlayer player, boolean showCount, CommandSourceStack source) {
         // Make sure they can't flex items if on cooldown and send feedback
         if (cooldowns.containsKey(player) && cooldowns.get(player) > 0) {
-            source.sendError(Placeholders.parseText(Text.empty().append(config.failureOnCooldown), PlaceholderContext.of(player)));
+            source.sendFailure(Placeholders.SERVER_PLACEHOLDER_PARSER.parseComponent(
+                config.failureOnCooldown, ServerPlaceholderContext.of(player).asParserContext()));
             return 0;
         }
 
         // Make sure they're actually holding something
-        if (stack.getItem() != Items.AIR) {
+        if (!stack.isEmpty()) {
             // Put them on cooldown
             cooldowns.put(player, config.cooldown);
 
             // Construct and broadcast the message to all users
-            Text text;
+            String messageString;
             if (showCount) {
-                text = Text.of(this.config.chatMessageWithCount);
+                messageString = this.config.chatMessageWithCount;
             } else {
-                text = Text.of(this.config.chatMessage);
+                messageString = this.config.chatMessage;
             }
 
-            Text message = Placeholders.parseText(text, PlaceholderContext.of(player));
-            for (ServerPlayerEntity other : source.getServer().getPlayerManager().getPlayerList()) {
-                other.sendMessage(message, false);
+            Component message = Placeholders.SERVER_PLACEHOLDER_PARSER.parseComponent(
+                messageString, ServerPlaceholderContext.of(player).asParserContext());
+            for (ServerPlayer other : source.getServer().getPlayerList().getPlayers()) {
+                other.sendSystemMessage(message, false);
             }
             return 1;
         } else {
-            source.sendError(Text.empty().append(config.failureNoItem));
+            source.sendFailure(Component.literal(config.failureNoItem));
             return 0;
         }
     }
