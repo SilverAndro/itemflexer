@@ -1,10 +1,12 @@
 # User-specific stuff
 .idea/
 .vscode/
-
+bin/
 *.iml
 *.ipr
 *.iws
+.classpath
+.project
 
 # IntelliJ
 out/
