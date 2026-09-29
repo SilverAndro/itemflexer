@@ -1,9 +1,13 @@
 plugins {
-    id 'fabric-loom' version '1.15-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
 version = project.mod_version
 group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
 
 repositories {
     mavenLocal()
@@ -21,17 +25,15 @@ repositories {
 dependencies {
     //to change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation fabricApi.module("fabric-command-api-v2", project.fabric_version)
-    modImplementation fabricApi.module("fabric-lifecycle-events-v1", project.fabric_version)
+    implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
-    modImplementation 'com.github.P03W:Microconfig:2.2.1'
+    implementation 'com.github.P03W:Microconfig:2.2.1'
     include 'com.github.P03W:Microconfig:2.2.1'
 
-    modImplementation("eu.pb4:placeholder-api:2.8.1+1.21.10")
-    include("eu.pb4:placeholder-api:2.8.1+1.21.10")
+    implementation("eu.pb4:placeholder-api:3.2.0+26.3")
+    include("eu.pb4:placeholder-api:3.2.0+26.3")
 }
 
 processResources {
@@ -44,6 +46,12 @@ processResources {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
+    options.release = 25
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {

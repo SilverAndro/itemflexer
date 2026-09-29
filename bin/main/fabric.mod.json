@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "itemflexer",
+  "version": "${version}",
+  "name": "ItemFlexer",
+  "description": "Lets you flex your items in chat",
+  "authors": [
+    "SilverAndro"
+  ],
+  "contact": {
+    "sources": "https://github.com/SilverAndro/itemflexer"
+  },
+  "license": "MIT",
+  "icon": "assets/itemflexer/icon.png",
+  "entrypoints": {
+    "main": [
+      "dev.silverandro.itemflexer.ItemFlexer"
+    ]
+  }
+}
